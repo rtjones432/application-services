@@ -396,9 +396,48 @@ impl RemergeDb {
     }
 
     fn dupe_exists(&self, _record: &LocalRecord) -> Result<bool> {
-        // XXX FIXME: this is obviously wrong, but should work for
-        // extension-storage / engines that don't do deduping. (Is it correct
-        // that ext-storage won't want to dedupe on anything?)
-        Ok(false)
+        let db_records = self.get_all().unwrap_or_default();
+        let dedupe_field_indexes = &self.info.local.dedupe_on;
+        let mut dupe_exists = false;
+
+        // Return false if either there are no records in the database or
+        // the schema contains no dedupe_on fields.
+        if db_records.is_empty() || dedupe_field_indexes.is_empty() {
+            return Ok(dupe_exists);
+        }
+
+        'record: for db_record in &db_records {
+            let db_id = &db_record.clone().into_val()["id"];
+            let local_id = &_record.clone().into_val()["id"];
+
+            // Prevent updates from being marked as dupes.
+            if db_id == local_id {
+                continue 'record;
+            }
+
+            // NOTE: Using a nested loop here since the numper of dedupe fields
+            // will be uknown at compile time but it is suboptimal.
+            for dedupe_field_index in dedupe_field_indexes {
+                let dedupe_field = &self.info.local.fields[*dedupe_field_index];
+                let db_field_value = &db_record.clone().into_val()[&dedupe_field.local_name];
+                let local_field_value = &_record.clone().into_val()[&dedupe_field.name];
+
+                dupe_exists = db_field_value == local_field_value;
+
+                // Because the values of all of the dedupe fields in the local record need to
+                // equal the equivalent values in the current database record, if dupe_exists is
+                // false the current record can be skipped.
+                if !dupe_exists {
+                    continue 'record;
+                }
+            }
+
+            // Return true if a duplicate is found.
+            if dupe_exists {
+                return Ok(dupe_exists);
+            }
+        }
+
+        Ok(dupe_exists)
     }
 }
