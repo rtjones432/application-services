@@ -227,7 +227,8 @@ impl UpdatePlan {
                   hostname = :hostname
                   AND httpRealm = :http_realm
                   AND formSubmitURL = :form_submit_url
-                 )),
+                  AND username = :username
+                 ))",
             changed = SyncStatus::Changed as u8
         );
         let mut stmt = conn.prepare_cached(&sql)?;
