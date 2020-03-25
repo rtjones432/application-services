@@ -11,3 +11,6 @@ dist
 /android
 /desktop
 /ios
+
+#local version of libs
+.current_libs_version
