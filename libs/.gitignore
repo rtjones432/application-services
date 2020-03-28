@@ -13,4 +13,4 @@ dist
 /ios
 
 #local version of libs
-.current_libs_version
+.local_libs_version

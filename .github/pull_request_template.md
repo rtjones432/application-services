@@ -8,4 +8,5 @@
   - Any breaking changes to Swift or Kotlin binding APIs are noted explicitly
 - [ ] **Dependencies**: This PR follows our [dependency management guidelines](https://github.com/mozilla/application-services/blob/master/docs/dependency-management.md)
   - Any new dependencies are accompanied by a summary of the due dilligence applied in selecting them.
-- [ ] **Library Version** This PR makes a change that will require /libs to be rebuilt.  **Honestly I still dont understand what should go here...** 
+- [ ] **Library Version** This PR makes a change that will require /libs to be rebuilt. In libs/version_log, 
+at the top of the file add the new version number, followed by a short description of the change. Ex: 0. Initial Version.
