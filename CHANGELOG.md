@@ -75,7 +75,7 @@
 ### What's New
 
 - Sourcing `libs/bootstrap-desktop.sh` is not a thing anymore. Please run `./libs/verify-desktop-environment.sh` at least once instead. ([#2769](https://github.com/mozilla/application-services/pull/2769))
-
+- Added a clobber mechanism so contributors don't have to delete their `libs/{desktop, ios, android}` folders manually.
 ## Push
 
 ### Breaking changes
