@@ -18,6 +18,9 @@ use serde_derive::*;
 use std::collections::{HashMap, HashSet};
 
 impl FirefoxAccount {
+
+
+    /// pub fn cached_device_list(&self) ->
     /// Fetches the list of devices from the current account including
     /// the current one.
     pub fn get_devices(&self) -> Result<Vec<Device>> {

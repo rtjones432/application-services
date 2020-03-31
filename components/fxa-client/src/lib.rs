@@ -56,6 +56,7 @@ pub struct FirefoxAccount {
     client: Arc<FxAClient>,
     state: StateV2,
     flow_store: HashMap<String, OAuthFlow>,
+    recent_devices: Option<Vec<Device>>,
 }
 
 #[derive(Clone, Serialize, Deserialize)]
@@ -118,6 +119,7 @@ impl FirefoxAccount {
             client: Arc::new(http_client::Client::new()),
             state,
             flow_store: HashMap::new(),
+            recent_devices: None;
         }
     }
 
