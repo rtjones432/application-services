@@ -5,15 +5,10 @@
 pub use crate::http_client::{
     DeviceLocation as Location, DeviceType as Type, GetDeviceResponse as Device, PushSubscription,
 };
-use crate::{
-    commands,
-    error::*,
-    http_client::{
-        CommandData, DeviceUpdateRequest, DeviceUpdateRequestBuilder, PendingCommand,
-        UpdateDeviceResponse,
-    },
-    FirefoxAccount, IncomingDeviceCommand,
-};
+use crate::{commands, error::*, http_client::{
+    CommandData, DeviceUpdateRequest, DeviceUpdateRequestBuilder, PendingCommand,
+    UpdateDeviceResponse,
+}, FirefoxAccount, IncomingDeviceCommand, CachedResponse, util};
 use serde_derive::*;
 use std::collections::{HashMap, HashSet};
 
@@ -23,9 +18,19 @@ impl FirefoxAccount {
     /// pub fn cached_device_list(&self) ->
     /// Fetches the list of devices from the current account including
     /// the current one.
-    pub fn get_devices(&self) -> Result<Vec<Device>> {
-        let refresh_token = self.get_refresh_token()?;
-        self.client.devices(&self.state.config, &refresh_token)
+    pub fn get_devices(&mut self) -> Result<Vec<Device>> {
+        /* questions:
+        it it okay to change self to mutable
+        */
+
+        if ((self.recent_devices.is_none()) || (self.recent_devices.unwrap().cached_at <= util::now() - 6000))  {
+            let refresh_token = self.get_refresh_token()?;
+            self.recent_devices = Some(CachedResponse {
+                response: self.client.devices(&self.state.config, &refresh_token),
+                 cached_at: util::now(),
+                 etag: "useless etag".into()});
+        }
+        self.recent_devices.unwrap().response
     }
 
     pub fn get_current_device(&self) -> Result<Option<Device>> {

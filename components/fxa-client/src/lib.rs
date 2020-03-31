@@ -56,7 +56,7 @@ pub struct FirefoxAccount {
     client: Arc<FxAClient>,
     state: StateV2,
     flow_store: HashMap<String, OAuthFlow>,
-    recent_devices: Option<Vec<Device>>,
+    recent_devices: mut Option<CachedResponse<Vec<Device>>>,
 }
 
 #[derive(Clone, Serialize, Deserialize)]
