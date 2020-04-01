@@ -2,24 +2,18 @@
 
 # Unreleased Changes
 
-[Full Changelog](https://github.com/mozilla/application-services/compare/v0.55.0...master)
+[Full Changelog](https://github.com/mozilla/application-services/compare/v0.56.0...master)
 
-## Logins
+## General
 
 ### ⚠️ Breaking changes ⚠️
 
-- Android: `MemoryLoginsStorage` has been removed. Use DatabaseLoginsStorage(":memory:") instead.
-  ([#2833](https://github.com/mozilla/application-services/pull/2823)).
+- iOS: The `reqwest` network stack will not be initialized automatically anymore.
+Please call `Viaduct.shared.useReqwestBackend()` as soon as possible before using the framework. ([#2880](https://github.com/mozilla/application-services/pull/2880))
 
-## Libs
+## Logins
 
-### What's changed
+### What's New
 
-- The project now builds with version 4.3.0 of SQLCipher instead of a fork
-  of version 4.2.0. Newest version has NSS crypto backend. ([#2822](https://github.com/mozilla/application-services/pull/2822)).
-
-## FxA Client
-
-### Breaking changes
-
-- `Server.dev` is now `Server.stage` to reflect better the FxA server instance it points to. ([#2830](https://github.com/mozilla/application-services/pull/2830)).
+- A new function was added to return a list of duplicate logins, ignoring
+  username. ([#2542](https://github.com/mozilla/application-services/pull/2542))
