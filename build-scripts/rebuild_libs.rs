@@ -41,7 +41,6 @@ fn parse_version() -> Result<bool, String> {
             curr_v = max(v, curr_v);
         }
     }
-    //assert_eq!(updated_v, curr_v);
     if updated_v != curr_v {
         fs::write(".local_libs_version", newest_version);
         return Ok(true);
@@ -51,9 +50,9 @@ fn parse_version() -> Result<bool, String> {
 #[allow(unused_must_use)]
 fn run_dependency_check() -> Result<String, String> {
 
-    let mut clobber_needed: bool = false;
+    let clobber_needed: bool;
 //    let mut dirs: Vec<fs::File> = Vec::new();
-    let mut dirs: Vec<&str> = Vec::new();
+    let dirs: Vec<&str> = Vec::new();
     let root = Path::new("../libs");
     println!("{}", root.display());
     assert!(env::set_current_dir(&root).is_ok());
@@ -71,7 +70,7 @@ fn run_dependency_check() -> Result<String, String> {
 }
 
 //fn clobber(directories: Vec<fs::File>) -> std::io::Result<()> {
-fn clobber(directories: Vec<&str>) -> std::io::Result<()> {
+fn clobber(_directories: Vec<&str>) -> std::io::Result<()> {
 
     println!("deleting old directories and rebuilding /libs...\n");
 
@@ -89,8 +88,9 @@ fn clobber(directories: Vec<&str>) -> std::io::Result<()> {
         fs::remove_dir_all("../libs/ios")?;
     }
     // Now execute the build-all script in a shell.
+    let script = String::from("./build-all.sh");
     let mut cmd = Command::new("bash");
-    cmd.arg("./build-all.sh");
+    cmd.arg(script);
     match cmd.output() {
         Ok(t) => {},
         Err(e) => return Err(e),
@@ -102,8 +102,4 @@ fn clobber(directories: Vec<&str>) -> std::io::Result<()> {
 fn main() {
     println!("its running\n");
     run_dependency_check().unwrap();
-   /* match run_dependency_check() {
-        Ok(_T) => Ok("Directories Clobbered Successfully."),
-        Err(_e) => "Counld not rebuild libs. Delete your folders for desktop, ios, and android, then manually run libs/build-all.sh \n"),
-    };*/
     }
