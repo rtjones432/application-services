@@ -17,22 +17,25 @@ const CACHED_DEVICES_THRESHOLD: u64 = 60_000; // 1 minute
 impl FirefoxAccount {
     /// Fetches the list of devices from the current account including
     /// the current one.
-    pub fn get_devices(&self) -> Result<Vec<Device>> {
+    pub fn get_devices(&mut self) -> Result<Vec<Device>> {
+
         let cachedList = self.recent_devices.clone();
-        if cachedList.is_some() && util::now() < cachedList.unwrap().cached_at + CACHED_DEVICES_THRESHOLD {
-            Ok(cachedList.unwrap().response)
-        } else {
-            let refresh_token = self.get_refresh_token()?;
-            self.recent_devices = Some(CachedResponse {
-                response: self.client.devices(&self.state.config, &refresh_token).unwrap(),
-                cached_at: util::now(),
-                etag: "useless etag".into()
-            });
-            self.client.devices(&self.state.config, &refresh_token)
+        if let Some(l) = cachedList {
+            if util::now() < l.cached_at + CACHED_DEVICES_THRESHOLD {
+                return Ok(l.response);
+            }
         }
+        let refresh_token = self.get_refresh_token()?;
+
+        self.recent_devices = Some(CachedResponse {
+            response: self.client.devices(&self.state.config, &refresh_token)?,
+            cached_at: util::now(),
+            etag: "useless etag".into()
+        });
+        self.client.devices(&self.state.config, &refresh_token)
     }
 
-    pub fn get_current_device(&self) -> Result<Option<Device>> {
+    pub fn get_current_device(&mut self) -> Result<Option<Device>> {
         Ok(self
             .get_devices()?
             .into_iter()
@@ -178,7 +181,7 @@ impl FirefoxAccount {
     }
 
     fn parse_commands_messages(
-        &self,
+        &mut self,
         messages: Vec<PendingCommand>,
     ) -> Result<Vec<IncomingDeviceCommand>> {
         let devices = self.get_devices()?;
