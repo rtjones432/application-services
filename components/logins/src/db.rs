@@ -1419,6 +1419,313 @@ mod tests {
     }
 
     #[test]
+    fn test_execute_plan_with_dupe() {
+        let db = LoginDb::open_in_memory(Some("testing")).unwrap();
+
+        db.add(Login {
+            guid: Guid::empty(),
+            form_submit_url: None,
+            hostname: "https://www.example.com".into(),
+            http_realm: Some("https://www.example.com".into()),
+            username: "test".into(),
+            password: "test".into(),
+            ..Login::default()
+        })
+        .unwrap();
+        
+        let duplicate_login = Login {
+            guid: Guid::empty(),
+            form_submit_url: Some("https://www.example.com".into()),
+            hostname: "https://www.example.com".into(),
+            http_realm: None,
+            username: "test".into(),
+            password: "test2".into(),
+            ..Login::default()
+        };
+        
+        let local =  LocalLogin {
+            login: Login {
+                guid: Guid::empty(),
+                form_submit_url: Some("https://www.example.com".into()),
+                hostname: "https://www.example.com".into(),
+                http_realm: None,
+                username: "test".into(),
+                password: "test2".into(),
+                ..Login::default()
+            },
+            sync_status: SyncStatus::New,
+            is_deleted: false,
+            local_modified: SystemTime::now()
+        };
+        let mirror = MirrorLogin {
+            login: Login {
+                guid: Guid::empty(),
+                form_submit_url: Some("https://www.example.com".into()),
+                hostname: "https://www.example.com".into(),
+                http_realm: None,
+                username: "test".into(),
+                password: "test2".into(),
+                ..Login::default()
+            },
+            is_overridden: false,
+            server_modified: ServerTimestamp(10_300_150)
+        };
+        
+        let mut plan = UpdatePlan::default();
+
+        plan.plan_three_way_merge(local, mirror, duplicate_login, ServerTimestamp(10_300_150), ServerTimestamp(10_100_050));
+        match plan.execute(&db.db, &db.begin_interrupt_scope()) {
+            Ok(()) => assert!(true),
+            _ => assert!(false)
+        };
+
+        let duplicate_login = Login {
+            guid: Guid::empty(),
+            form_submit_url: Some("https://www.example.com".into()),
+            hostname: "https://www.example.com".into(),
+            http_realm: None,
+            username: "test".into(),
+            password: "test2".into(),
+            ..Login::default()
+        };
+        assert_eq!(false, db.dupe_exists(&duplicate_login).unwrap());
+
+    }
+
+    #[test]
+    fn test_execute_plan_new_unique_login() {
+        let db = LoginDb::open_in_memory(Some("testing")).unwrap();
+
+        db.add(Login {
+            guid: Guid::empty(),
+            form_submit_url: None,
+            hostname: "https://www.example.com".into(),
+            http_realm: Some("https://www.example.com".into()),
+            username: "test".into(),
+            password: "test".into(),
+            ..Login::default()
+        })
+        .unwrap();
+        
+        let new_login = Login {
+            guid: "dummy_000001".into(),
+            form_submit_url: Some("https://www.example1.com".into()),
+            hostname: "https://www.example1.com".into(),
+            http_realm: None,
+            username: "test1".into(),
+            password: "test2".into(),
+            ..Login::default()
+        };
+        
+        let local =  LocalLogin {
+            login: Login {
+                guid: "dummy_000001".into(),
+                form_submit_url: Some("https://www.example1.com".into()),
+                hostname: "https://www.example1.com".into(),
+                http_realm: None,
+                username: "test1".into(),
+                password: "test2".into(),
+                ..Login::default()
+            },
+            sync_status: SyncStatus::New,
+            is_deleted: false,
+            local_modified: SystemTime::now()
+        };
+        let mirror = MirrorLogin {
+            login: Login {
+                guid: "dummy_000001".into(),
+                form_submit_url: Some("https://www.example1.com".into()),
+                hostname: "https://www.example1.com".into(),
+                http_realm: None,
+                username: "test1".into(),
+                password: "test2".into(),
+                ..Login::default()
+            },
+            is_overridden: false,
+            server_modified: ServerTimestamp(10_300_150)
+        };
+        
+        let mut plan = UpdatePlan::default();
+
+        plan.plan_three_way_merge(local, mirror, new_login, ServerTimestamp(10_300_150), ServerTimestamp(10_100_050));
+        match plan.execute(&db.db, &db.begin_interrupt_scope()) {
+            Ok(()) => assert!(true),
+            _ => assert!(false)
+        };
+
+        let new_login = Login {
+            guid: "dummy_000001".into(),
+            form_submit_url: Some("https://www.example1.com".into()),
+            hostname: "https://www.example1.com".into(),
+            http_realm: None,
+            username: "test1".into(),
+            password: "test2".into(),
+            ..Login::default()
+        };
+        assert_eq!(false, db.dupe_exists(&new_login).unwrap());
+
+    }
+
+    #[test]
+    fn test_execute_plan_update_existing_login_no_dupe() {
+        let db = LoginDb::open_in_memory(Some("testing")).unwrap();
+
+        db.add(Login {
+            guid: "dummy_000001".into(),
+            form_submit_url: Some("https://www.example.com".into()),
+            hostname: "https://www.example1.com".into(),
+            http_realm: Some("https://www.example.com".into()),
+            username: "test".into(),
+            password: "test".into(),
+            ..Login::default()
+        })
+        .unwrap();
+        
+        let new_login = Login {
+            guid: "dummy_000001".into(),
+            form_submit_url: Some("https://www.example1.com".into()),
+            hostname: "https://www.example1.com".into(),
+            http_realm: Some("https://www.example.com".into()),
+            username: "test1".into(),
+            password: "test".into(),
+            ..Login::default()
+        };
+        
+        let local =  LocalLogin {
+            login: Login {
+                guid: "dummy_000001".into(),
+                form_submit_url: Some("https://www.example1.com".into()),
+                hostname: "https://www.example1.com".into(),
+                http_realm: Some("https://www.example.com".into()),
+                username: "test1".into(),
+                password: "test".into(),
+                ..Login::default()
+            },
+            sync_status: SyncStatus::New,
+            is_deleted: false,
+            local_modified: SystemTime::now()
+        };
+        let mirror = MirrorLogin {
+            login: Login {
+                guid: "dummy_000001".into(),
+                form_submit_url: Some("https://www.example1.com".into()),
+                hostname: "https://www.example1.com".into(),
+                http_realm: Some("https://www.example.com".into()),
+                username: "test1".into(),
+                password: "test".into(),
+                ..Login::default()
+            },
+            is_overridden: false,
+            server_modified: ServerTimestamp(10_300_150)
+        };
+        
+        let mut plan = UpdatePlan::default();
+
+        plan.plan_three_way_merge(local, mirror, new_login, ServerTimestamp(10_300_150), ServerTimestamp(10_100_050));
+        match plan.execute(&db.db, &db.begin_interrupt_scope()) {
+            Ok(()) => assert!(true),
+            _ => assert!(false)
+        };
+
+        let new_login = Login {
+            guid: "dummy_000001".into(),
+            form_submit_url: Some("https://www.example1.com".into()),
+            hostname: "https://www.example1.com".into(),
+            http_realm: Some("https://www.example.com".into()),
+            username: "test1".into(),
+            password: "test".into(),
+            ..Login::default()
+        };
+        assert_eq!(false, db.dupe_exists(&new_login).unwrap());
+
+    }
+
+    #[test]
+    fn test_execute_plan_update_existing_login_creates_dupe() {
+        let db = LoginDb::open_in_memory(Some("testing")).unwrap();
+
+        db.add(Login {
+            guid: "dummy_000001".into(),
+            form_submit_url: Some("https://www.example.com".into()),
+            hostname: "https://www.example1.com".into(),
+            http_realm: Some("https://www.example.com".into()),
+            username: "test".into(),
+            password: "test".into(),
+            ..Login::default()
+        })
+        .unwrap();
+
+        db.add(Login {
+            guid: "dummy_000002".into(),
+            form_submit_url: Some("https://www.example.com".into()),
+            hostname: "https://www.example2.com".into(),
+            http_realm: Some("https://www.example.com".into()),
+            username: "test".into(),
+            password: "test".into(),
+            ..Login::default()
+        })
+        .unwrap();
+        
+        let new_login = Login {
+            guid: "dummy_000002".into(),
+            form_submit_url: Some("https://www.example.com".into()),
+            hostname: "https://www.example1.com".into(),
+            http_realm: Some("https://www.example.com".into()),
+            username: "test".into(),
+            password: "test".into(),
+            ..Login::default()
+        };
+        
+        let local =  LocalLogin {
+            login: Login {
+                guid: "dummy_000002".into(),
+                form_submit_url: Some("https://www.example.com".into()),
+                hostname: "https://www.example1.com".into(),
+                http_realm: Some("https://www.example.com".into()),
+                username: "test".into(),
+                password: "test".into(),
+                ..Login::default()
+            },
+            sync_status: SyncStatus::New,
+            is_deleted: false,
+            local_modified: SystemTime::now()
+        };
+        let mirror = MirrorLogin {
+            login: Login {
+                guid: "dummy_000002".into(),
+                form_submit_url: Some("https://www.example.com".into()),
+                hostname: "https://www.example1.com".into(),
+                http_realm: Some("https://www.example.com".into()),
+                username: "test".into(),
+                password: "test".into(),
+                ..Login::default()
+            },
+            is_overridden: false,
+            server_modified: ServerTimestamp(10_300_150)
+        };
+        
+        let mut plan = UpdatePlan::default();
+
+        plan.plan_three_way_merge(local, mirror, new_login, ServerTimestamp(10_300_150), ServerTimestamp(10_100_050));
+        match plan.execute(&db.db, &db.begin_interrupt_scope()) {
+            Ok(()) => assert!(true),
+            _ => assert!(false)
+        };
+
+        let new_login = Login {
+            guid: "dummy_000002".into(),
+            form_submit_url: Some("https://www.example.com".into()),
+            hostname: "https://www.example1.com".into(),
+            http_realm: Some("https://www.example.com".into()),
+            username: "test".into(),
+            password: "test".into(),
+            ..Login::default()
+        };
+        assert_eq!(false, db.dupe_exists(&new_login).unwrap());
+
+    }
+
+    #[test]
     fn test_unicode_submit() {
         let db = LoginDb::open_in_memory(Some("testing")).unwrap();
         db.add(Login {
