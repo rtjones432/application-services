@@ -1713,7 +1713,7 @@ mod tests {
         };
 
         let new_login = Login {
-            guid: "dummy_000002".into(),
+            guid: "dummy_000001".into(),
             form_submit_url: Some("https://www.example.com".into()),
             hostname: "https://www.example1.com".into(),
             http_realm: Some("https://www.example.com".into()),
@@ -1721,6 +1721,7 @@ mod tests {
             password: "test".into(),
             ..Login::default()
         };
+
         assert_eq!(false, db.dupe_exists(&new_login).unwrap());
 
     }

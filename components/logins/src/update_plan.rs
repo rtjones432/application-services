@@ -225,8 +225,11 @@ impl UpdatePlan {
                 WHERE guid != :guid
                 AND (
                   hostname = :hostname
-                  AND httpRealm = :http_realm
-                  AND formSubmitURL = :form_submit_url
+                  AND (
+                    formSubmitURL = :form_submit_url
+                    OR
+                    httpRealm = :http_realm
+                    )
                   AND username = :username
                  ))",
             changed = SyncStatus::Changed as u8
