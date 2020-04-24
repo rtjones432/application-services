@@ -219,7 +219,19 @@ impl UpdatePlan {
                  hostname            = :hostname,
                  username            = :username,
                  sync_status         = {changed}
-             WHERE guid = :guid",
+             WHERE guid = :guid
+             AND NOT EXISTS (
+                SELECT guid FROM loginsL
+                WHERE guid != :guid
+                AND (
+                  hostname = :hostname
+                  AND (
+                    formSubmitURL = :form_submit_url
+                    OR
+                    httpRealm = :http_realm
+                    )
+                  AND username = :username
+                 ))",
             changed = SyncStatus::Changed as u8
         );
         let mut stmt = conn.prepare_cached(&sql)?;
