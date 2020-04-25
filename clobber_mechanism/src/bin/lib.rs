@@ -27,9 +27,8 @@ struct Opt {
 
     #[structopt(short = "d",
     long  = "directories",
-    parse(from_os_str),
-    default_value = "desktop ios android")]
-    #[structopt(help = "Input files or directories",
+    default_value = "desktop, ios, android",
+    use_delimiter=true,
     parse(from_os_str))]
     inputs: Vec<PathBuf>
 }
@@ -141,8 +140,12 @@ fn main() {
     let opt = Opt::from_args();
     println!("{:#?}", opt);
     let script = String::from("build-all.sh");
-    let dirs_to_clobber = vec![String::from("desktop"), String::from("ios"), String::from("android")];
-    run_process(script  , dirs_to_clobber);
+    let mut dirs_to_clobber: Vec<String> = Vec::new(); // = "".to_string(); // = vec![String::from("desktop"), String::from("ios"), String::from("android")];
+    for x in opt.inputs {
+        dirs_to_clobber.push(opt.inputs[x].as_path().display().to_string());
+        //dirs_to_clobber.push(String::from(opt.inputs[x]));
+    }
+    run_process(opt.script, dirs_to_clobber);
 
 }
 
