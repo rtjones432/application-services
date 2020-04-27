@@ -18,21 +18,27 @@ impl FirefoxAccount {
     /// Fetches the list of devices from the current account including
     /// the current one.
     pub fn get_devices(&mut self) -> Result<Vec<Device>> {
-
-        let cachedList = self.recent_devices.clone();
-        if let Some(l) = cachedList {
-            if util::now() < l.cached_at + CACHED_DEVICES_THRESHOLD {
-                return Ok(l.response);
-            }
+        match &self.devices_list {
+            Some(cachedList) =>
+                if util::now() < cachedList.cached_at + CACHED_DEVICES_THRESHOLD {
+                    return Ok(cachedList.response.clone());
+                },
+            None => ()
         }
         let refresh_token = self.get_refresh_token()?;
-
-        self.recent_devices = Some(CachedResponse {
-            response: self.client.devices(&self.state.config, &refresh_token)?,
+        let fetched_devices_list = self.client.devices(&self.state.config, &refresh_token);
+        if let Err(E) = fetched_devices_list {
+            return Err(E)
+        }
+        let new_devices_list = fetched_devices_list.unwrap();
+        self.devices_list = Some(CachedResponse {
+            response: new_devices_list.clone(),
             cached_at: util::now(),
-            etag: "useless etag".into()
+            etag: "etag".into()
         });
-        self.client.devices(&self.state.config, &refresh_token)
+        Ok(new_devices_list)
+
+
     }
 
     pub fn get_current_device(&mut self) -> Result<Option<Device>> {
