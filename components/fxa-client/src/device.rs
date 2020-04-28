@@ -19,16 +19,16 @@ impl FirefoxAccount {
     /// the current one.
     pub fn get_devices(&mut self) -> Result<Vec<Device>> {
         match &self.devices_list {
-            Some(cachedList) =>
-                if util::now() < cachedList.cached_at + CACHED_DEVICES_THRESHOLD {
-                    return Ok(cachedList.response.clone());
+            Some(cached_list) =>
+                if util::now() < cached_list.cached_at + CACHED_DEVICES_THRESHOLD {
+                    return Ok(cached_list.response.clone());
                 },
             None => ()
         }
         let refresh_token = self.get_refresh_token()?;
         let fetched_devices_list = self.client.devices(&self.state.config, &refresh_token);
-        if let Err(E) = fetched_devices_list {
-            return Err(E)
+        if let Err(e) = fetched_devices_list {
+            return Err(e)
         }
         let new_devices_list = fetched_devices_list.unwrap();
         self.devices_list = Some(CachedResponse {
