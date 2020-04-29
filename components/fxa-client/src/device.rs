@@ -16,7 +16,8 @@ const CACHED_DEVICES_THRESHOLD: u64 = 60_000; // 1 minute
 
 impl FirefoxAccount {
     /// Fetches the list of devices from the current account including
-    /// the current one.
+    /// the current one. If there already exists a recent cached list then
+    /// it skips this step and returns the cached list of devices.
     pub fn get_devices(&mut self) -> Result<Vec<Device>> {
         match &self.devices_list {
             Some(cached_list) =>
