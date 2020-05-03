@@ -25,9 +25,9 @@ fn test_clobber() {
     //assert!(env::set_current_dir(&root).is_ok());
 
     let s = Status::OK;
-    let dir1 = TempDir::new_in(".", "test1");
-    let dir2 = TempDir::new_in(".", "test2");
-    let dir3 = TempDir::new_in(".", "test3");
+    let dir1 = TempDir::new_in("./", "test1");
+    let dir2 = TempDir::new_in("./", "test2");
+    let dir3 = TempDir::new_in("./", "test3");
     let mut test_dir_list = vec![String::from("test1"), String::from("test2"), String::from("test3")];
     let mut tdl = vec![dir1, dir2, dir3];
 
@@ -51,12 +51,15 @@ fn test_clobber() {
 #[test]
 // run process with defaults
 fn end_to_end_test_1() {
-    /*
+
     let opt = Opt::from_args();
-    let s = opt.script;
-    run_process(opt.script, opt.inputs); //this currently does what its supposed to...not with temp directories.
+    let dir1 = TempDir::new_in("./", "test1");
+    let dir2 = TempDir::new_in("./", "test2");
+    let dir3 = TempDir::new_in("./", "test3");
+    let mut test_dir_list = vec![String::from("test1"), String::from("test2"), String::from("test3")];
+    run_process(opt.script, test_dir_list); //this currently does what its supposed to...not with temp directories.
     //assert_eq!();
-    */
+
 }
 
 #[test]

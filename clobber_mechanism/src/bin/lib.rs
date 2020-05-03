@@ -61,7 +61,7 @@ fn parse_version(newest_version: String, local_version: String) -> Result<bool, 
 #[allow(unused_must_use)]
 fn run_dependency_check(vl: String, loc_version: String) -> Result<bool, String> {
 
-    let root = Path::new("../../libs");
+    let root = Path::new("../../../libs");
     assert!(env::set_current_dir(&root).is_ok());
     //  If there is no local version log, clobber is needed.
     if !(Path::new(&loc_version).exists()) {
@@ -139,11 +139,12 @@ fn run_process(script: String, mut dirs_to_clobber: Vec<String>) {
 fn main() {
     let opt = Opt::from_args();
     println!("{:#?}", opt);
-    let script = String::from("build-all.sh");
+    //let script = String::from("build-all.sh");
     let mut dirs_to_clobber: Vec<String> = Vec::new(); // = "".to_string(); // = vec![String::from("desktop"), String::from("ios"), String::from("android")];
-    for x in opt.inputs {
-        dirs_to_clobber.push(opt.inputs[x].as_path().display().to_string());
-        //dirs_to_clobber.push(String::from(opt.inputs[x]));
+    for x in 0..opt.inputs.len() {
+        let a = opt.inputs[x].to_str();
+        dirs_to_clobber.push(String::from(a.unwrap()));
+        println!("{:?}", a);
     }
     run_process(opt.script, dirs_to_clobber);
 
