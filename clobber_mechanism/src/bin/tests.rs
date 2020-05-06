@@ -21,14 +21,13 @@ fn test_run_dependency_check() {
 #[test]
 fn test_clobber() {
 
-    //let root = Path::new("../../libs");
-    //assert!(env::set_current_dir(&root).is_ok());
-
     let s = Status::OK;
     let dir1 = TempDir::new_in("./", "test1");
     let dir2 = TempDir::new_in("./", "test2");
     let dir3 = TempDir::new_in("./", "test3");
-    let mut test_dir_list = vec![String::from("test1"), String::from("test2"), String::from("test3")];
+
+    //yeah...this is shitty.
+    let mut test_dir_list = vec![dir1.as_ref().unwrap().path().display().to_string(), dir2.as_ref().unwrap().path().display().to_string(), dir3.as_ref().unwrap().path().display().to_string()];
     let mut tdl = vec![dir1, dir2, dir3];
 
     // Check that the temp directory actually exists.
@@ -52,12 +51,15 @@ fn test_clobber() {
 // run process with defaults
 fn end_to_end_test_1() {
 
-    let opt = Opt::from_args();
-    let dir1 = TempDir::new_in("./", "test1");
-    let dir2 = TempDir::new_in("./", "test2");
-    let dir3 = TempDir::new_in("./", "test3");
-    let mut test_dir_list = vec![String::from("test1"), String::from("test2"), String::from("test3")];
-    run_process(opt.script, test_dir_list); //this currently does what its supposed to...not with temp directories.
+    let s = Status::OK;
+    let dir1 = TempDir::new_in(".", "test1");
+    let dir2 = TempDir::new_in(".", "test2");
+    let dir3 = TempDir::new_in(".", "test3");
+
+    //yeah...this is still shitty.
+    let mut test_dir_list = vec![dir1.as_ref().unwrap().path().display().to_string(), dir2.as_ref().unwrap().path().display().to_string(), dir3.as_ref().unwrap().path().display().to_string()];
+
+    run_process(String::from("build-all.sh"), test_dir_list); //this currently does what its supposed to...not with temp directories.
     //assert_eq!();
 
 }

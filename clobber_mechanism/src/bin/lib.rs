@@ -61,7 +61,7 @@ fn parse_version(newest_version: String, local_version: String) -> Result<bool, 
 #[allow(unused_must_use)]
 fn run_dependency_check(vl: String, loc_version: String) -> Result<bool, String> {
 
-    let root = Path::new("../../../libs");
+    let root = Path::new("../libs");
     assert!(env::set_current_dir(&root).is_ok());
     //  If there is no local version log, clobber is needed.
     if !(Path::new(&loc_version).exists()) {
@@ -87,7 +87,6 @@ fn clobber(directories: &mut Vec<String>) -> Status {
     println!("deleting old directories and rebuilding /libs...\n");
 
     for x in directories {
-        println!("{}", x);
         let curr_dir = Path::new(&x);
         if curr_dir.exists() {
             match fs::remove_dir_all(curr_dir) {
@@ -103,12 +102,30 @@ fn clobber(directories: &mut Vec<String>) -> Status {
 fn rebuild(build_script: String) -> Status {
 
     // Now execute the build-all script in a shell.
-    let mut cmd = Command::new("bash");
+    /*let mut cmd = Command::new("bash");
     cmd.arg(build_script);
+    cmd.output();
+    //if output.status.success() {
+    //    let s = String::from_utf8_lossy(&output.stdout);
     match cmd.output() {
-        Ok(_t) => {},
+        Ok(_t) => {let mut s = String::from_utf8_lossy(&output.stdout); println!("{}", s)},
         Err(_e) => return Status::FAIL,
-    };
+    };*/
+    let output = Command::new("bash")
+        .arg(build_script)
+        .output().unwrap_or_else(|_e| {
+        panic!("rebuild failed. re-run /libs/build-all.sh manually.")
+    });
+
+    if output.status.success() {
+        let s = String::from_utf8_lossy(&output.stdout);
+
+        print!("\n{}\n", s);
+    } else {
+        let s = String::from_utf8_lossy(&output.stderr);
+
+        println!("\n{}\n rebuild failed. re-run /libs/build-all.sh manually.", s);
+    }
     Status::OK
 }
 
@@ -120,31 +137,34 @@ fn run_process(script: String, mut dirs_to_clobber: Vec<String>) {
     let clobber_needed: bool;
     clobber_needed = run_dependency_check(version_log.clone(), local_version.clone()).unwrap();
 
-    println!("clobbering: {:?}", dirs_to_clobber);
+
     if clobber_needed {
+        println!("clobbering: {:?}", dirs_to_clobber);
         match clobber(&mut dirs_to_clobber) {
             Status::OK => println!("Directories successfully clobbered!\n"),
             Status::FAIL => println!("Counld not rebuild libs. Delete your folders for desktop, ios, and android, then manually run libs/build-all.sh \n"),
         }
-        rebuild(script);
-    }
-    //update the local version log.
-    match fs::copy(&version_log, &local_version) {
-        Ok(_) => {},
-        Err(_) => {},
-    }
+
+        match rebuild(script) {
+            Status::OK =>
+            //update the local version log.
+                match fs::copy(&version_log, &local_version) {
+                    Ok(_) => {},
+                    Err(_) => {},
+                },
+            Status::FAIL => {} //errors were already handled in rebuild();
+        }
+
+    } else { println!("/libs directory is up to date."); }
 }
 
 #[allow(dead_code)]
 fn main() {
     let opt = Opt::from_args();
-    println!("{:#?}", opt);
-    //let script = String::from("build-all.sh");
-    let mut dirs_to_clobber: Vec<String> = Vec::new(); // = "".to_string(); // = vec![String::from("desktop"), String::from("ios"), String::from("android")];
+    let mut dirs_to_clobber: Vec<String> = Vec::new();
     for x in 0..opt.inputs.len() {
         let a = opt.inputs[x].to_str();
         dirs_to_clobber.push(String::from(a.unwrap()));
-        println!("{:?}", a);
     }
     run_process(opt.script, dirs_to_clobber);
 
